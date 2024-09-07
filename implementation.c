@@ -1,8 +1,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <limits.h>
-int max_n; 
-// #define size 20
+#include <string.h>
+
+char s[48]= "";
 
 // special character '$' for specifying internal node.
 typedef struct node_
@@ -44,7 +45,7 @@ void swap(node** x, node** y)
 }
 void insert(min_heap* h)
 {
-
+    (h->n)++;
 	int temp = (h->n)-1;
 	int parent = (temp-1)/2;
 	while (temp != 0)
@@ -60,9 +61,22 @@ void insert(min_heap* h)
 	}
 	return;
 }
-node* delete(min_heap* h)
+node* delete_node(min_heap* h)
 {
-	swap(&(h->array[0]), &(h->array[h->n - 1]));
+    if (h->n == 0)
+        return NULL;
+    
+    if (h->n == 1)
+    {
+        (h->n)--;
+        return h->array[h->n];
+    }
+    swap(&(h->array[0]), &(h->array[h->n - 1]));
+    if (h->n == 2)
+    {
+        (h->n)--;
+        return h->array[h->n];
+    }
 	int i = 0, last_internal_node = (h->n-3)/2;
 	while (i <= last_internal_node)
 	{
@@ -91,10 +105,8 @@ min_heap* set_min_heap(min_heap *h)
     while (fscanf(file, " %c %d", &ch, &fq) != EOF)
     {
         h->array[h->n] = create_node(ch, fq);
-        (h->n)++;
         insert(h);
     }
-    max_n = h->n;
     return h;
 }
 void print_min_heap(min_heap *h)
@@ -107,54 +119,59 @@ void print_min_heap(min_heap *h)
 node* build_huffman_tree(min_heap *h)
 {
     node *left, *right, *top;
-
     while (h->n > 1)
     {
-        left = delete(h);
-        right = delete(h);
+        left = delete_node(h);
+        right = delete_node(h);
 
         top = create_node('$', left->frequency+right->frequency);
         top->left = left;
         top->right = right;
         h->array[h->n] = top;
-        (h->n)++;
         insert(h);
     }
-    return delete(h);
+    return delete_node(h);
 }
+char *str = s;
 
-void print_codes(node *root, int *array, int top)
+
+void print_codes(node *root, char *str, int depth)
 {
+    if (root->ch != '$')
+    {
+        printf("%c: %s\n", root->ch, str);
+        str[strlen(str)-1] = '\0';
+        return;
+    }
     if (root->left)
     {
-        array[top] = 0;
-        print_codes(root->left, array, top+1);
-        return;
+        str[depth] = '0';
+        str[depth+1] = '\0';
+        print_codes(root->left, str, depth+1);
     }
     if (root->right)
     {
-        array[top] = 1;
-        print_codes(root->right, array, top+1);
-        return;
+        str[depth] = '1';
+        str[depth+1] = '\0';    
+        print_codes(root->right, str, depth+1);
     }
-    printf("%c: ", root->ch);
-    for (int i = 0; i < max_n; i++)
-        printf("%d", array[i]);
-    printf("\n");
     return;
 }
+
 void huffman_code(min_heap* h)
 {
     node *root = build_huffman_tree(h);
     // print codes.
-    int* array = (int *)(malloc(sizeof(int)*h->capacity));
-    print_codes(root, array, 0);
+
+    print_codes(root, str, 0);
+    return;
 }
 int main()
 {
-    min_heap *h = create_min_heap(20);
+    min_heap *h = create_min_heap(6);
     set_min_heap(h);
     print_min_heap(h);
+
 
     printf("\n");
     huffman_code(h);
